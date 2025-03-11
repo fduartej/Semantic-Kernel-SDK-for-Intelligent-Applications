@@ -1,0 +1,108 @@
+﻿@{
+    Layout = null;
+}
+
+<div id="chatPopup">
+    <div id="chat-content" class="mb-3">
+        <!-- Messages will appear here -->
+    </div>
+    <!-- Bot Typing Indicator (Hidden by Default) -->
+    <div id="typing-indicator" class="text-secondary" style="display: none;">Bot is typing...</div>
+
+    <form method="post" id="chat-form" class="d-flex">
+        <textarea id="chat-input" name="userMessage" class="form-control me-2" required></textarea>
+        <button type="submit" class="btn btn-primary">Send</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let sessionId = getSessionId();
+        fetchChatHistory(sessionId);
+    });
+
+    function fetchChatHistory(sessionId) {
+        $.ajax({
+            url: `/api/chat/${sessionId}`, 
+            type: "GET",
+            contentType: "application/json",
+            success: function (data) {
+                console.log(data);
+                data.forEach(function (messageObj) {
+                    let className = messageObj.sender == "User" ? "text-end alert alert-primary" : "alert alert-success";
+                    let message = messageObj.sender == "User" ? `<strong>You: </strong>${messageObj.message}` : messageObj.message;
+                    appendMessage(message, className);
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error("Chat history request failed:", error);
+                appendMessage("Error loading chat history.", "alert alert-danger");
+            }
+        });
+    }
+
+    document.getElementById("chat-form").addEventListener("submit", function(event) {
+        event.preventDefault(); // Prevent form submission
+        let userMessage = document.getElementById("chat-input").value;
+        if (userMessage === "") return;
+
+        // Append user message to chat area immediately
+        appendMessage(`<strong>You: </strong>${userMessage}`, "text-end alert alert-primary");
+
+        // Show typing indicator
+        let typingIndicator = document.getElementById("typing-indicator");
+        typingIndicator.style.display = "block";
+
+        let sessionId = getSessionId();
+        // Send message to server
+         $.ajax({
+            url: "/api/chat/",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ userMessage: userMessage, sessionId: sessionId }),
+            success: function (data) {
+                console.log(data);
+                // Ensure we use the correct property from the response
+                appendMessage(data, "alert alert-success");
+            },
+            error: function (xhr, status, error) {
+                console.error("Chat request failed:", error);
+                appendMessage("Error communicating with the bot.", "alert alert-danger");
+            }
+        });
+        typingIndicator.style.display = "none"; // Hide typing indicator on error
+        // Clear input field
+        document.getElementById("chat-input").value = "";
+
+     });
+
+      function appendMessage(message, className) {
+        let chatContent = document.getElementById("chat-content");
+        let msgDiv = document.createElement("div");
+        msgDiv.className = className;
+        msgDiv.innerHTML = message;
+        chatContent.appendChild(msgDiv);
+
+        // Auto-scroll to the bottom
+        chatContent.scrollTop = chatContent.scrollHeight;
+    }
+
+    // Function to generate a UUID
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0,
+                v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    // Check if session ID exists, otherwise create a new one
+    function getSessionId() {
+        let sessionId = localStorage.getItem("chatSessionId");
+        if (!sessionId) {
+            sessionId = generateUUID();
+            localStorage.setItem("chatSessionId", sessionId);
+        }
+        return sessionId;
+    }
+</script>
