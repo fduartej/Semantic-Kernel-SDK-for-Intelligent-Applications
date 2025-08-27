@@ -12,7 +12,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString));
 
 builder.Services.AddScoped<ChatService>();    
-builder.Services.AddSingleton<SemanticKernelService>();
+builder.Services.AddScoped<SemanticKernelService>();
 builder.Services.AddControllersWithViews();
 var app = builder.Build();
 
@@ -24,7 +24,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Comentamos temporalmente el redirect HTTPS para debugging
+// app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();

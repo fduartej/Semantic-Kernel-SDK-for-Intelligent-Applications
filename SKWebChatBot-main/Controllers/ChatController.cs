@@ -20,9 +20,9 @@ public class ChatController(SemanticKernelService _semanticKernelService, ChatSe
         var sessionId = chatRequest.SessionId;
         var messages = await _chatService.GetMessagesAsync(sessionId); 
         await _chatService.AddMessageAsync(sessionId, chatRequest.UserMessage, "User");
-        // var response = await _semanticKernelService.GetChatResponseAsync(chatRequest.UserMessage);
+        var response = await _semanticKernelService.GetChatResponseAsync(chatRequest.UserMessage);
         // var response = await _semanticKernelService.GetChatResponseWithHistoryAsync(chatRequest.UserMessage, messages);
-        var response = await _semanticKernelService.GetChatResponseWithRagAsync(chatRequest.UserMessage);
+        // var response = await _semanticKernelService.GetChatResponseWithRagAsync(chatRequest.UserMessage);
         await _chatService.AddMessageAsync(sessionId, response, "Bot");
         return Ok(response);
     }
